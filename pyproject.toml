@@ -65,6 +65,10 @@ notebooks = [
     "scikit-image",
     "scikit-learn",
 ]
+ui = [
+    "gradio>=4.0",
+    "opencv-python",
+]
 train = [
     "hydra-core",
     "submitit",
