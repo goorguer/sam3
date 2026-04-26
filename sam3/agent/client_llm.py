@@ -6,6 +6,24 @@ from typing import Any, Optional
 
 from openai import OpenAI
 
+# ---------------------------------------------------------------------------
+# Ollama / Gemma 4 local inference
+#
+# Ollama exposes an OpenAI-compatible REST API, so we can reuse the existing
+# send_generate_request implementation. This wrapper just sets sensible
+# defaults for running Gemma 4 on a local machine via Ollama.
+#
+# Recommended Gemma 4 variants (Ollama model tags):
+#   gemma4:4b   - ~4 GB RAM  – fastest, less accurate
+#   gemma4:12b  - ~8 GB RAM  – good balance for most laptops  (default)
+#   gemma4:27b  - ~20 GB RAM – best quality, full multimodal
+#
+# Prerequisites:
+#   1. Install Ollama:  https://ollama.com
+#   2. Pull a model:    ollama pull gemma4:12b
+#   3. Start the server (usually auto-starts): ollama serve
+# ---------------------------------------------------------------------------
+
 
 def get_image_base64_and_mime(image_path):
     """Convert image file to base64 string and get MIME type"""
@@ -123,6 +141,36 @@ def send_generate_request(
     except Exception as e:
         print(f"Request failed: {e}")
         return None
+
+
+def send_generate_request_ollama(
+    messages,
+    model="gemma4:12b",
+    ollama_host="http://localhost:11434",
+    max_tokens=4096,
+):
+    """
+    Send a request to a local Ollama instance running Gemma 4.
+
+    Ollama exposes the same OpenAI-compatible endpoint format as vLLM, so
+    this is a thin wrapper around send_generate_request with Ollama defaults.
+
+    Args:
+        messages: List of message dicts (OpenAI chat format).
+        model: Ollama model tag, e.g. "gemma4:4b", "gemma4:12b", "gemma4:27b".
+        ollama_host: Base URL of the Ollama server (default: http://localhost:11434).
+        max_tokens: Maximum tokens to generate (default: 4096).
+
+    Returns:
+        str: Generated response text, or None on failure.
+    """
+    return send_generate_request(
+        messages=messages,
+        server_url=f"{ollama_host}/v1",
+        model=model,
+        api_key="ollama",
+        max_tokens=max_tokens,
+    )
 
 
 def send_direct_request(
